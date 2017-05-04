@@ -1,5 +1,6 @@
 
 #include "DDKalTest/DDKalDetector.h"
+#include "DDKalTest/DDPixelMeasVolume.h"
 #include "DDKalTest/DDCylinderMeasLayer.h"
 #include "DDKalTest/DDConeMeasLayer.h"
 #include "DDKalTest/DDParallelPlanarMeasLayer.h"
@@ -17,6 +18,12 @@
 #include "Exceptions.h"
 
 #include "streamlog/streamlog.h"
+
+inline bool isPixelTPC() {
+  DD4hep::Geometry::LCDD& lcdd = DD4hep::Geometry::LCDD::getInstance();
+  const std::string TPCReadoutType= lcdd.constantAsString("TPC_readoutType");
+  return (TPCReadoutType=="pixel");
+}
 
 
 DDKalDetector::DDKalDetector( dd4hep::DetElement det ){
@@ -80,8 +87,12 @@ DDKalDetector::DDKalDetector( dd4hep::DetElement det ){
 			   << " ------------------------- "  << std::endl ;
 
     if( surf->type().isCylinder() ) {
-
-      Add( new DDCylinderMeasLayer( surf , Bz ) ) ;
+      if(det.type()==std::string("TPC")  &&  isPixelTPC()) {
+    	  Add( new DDPixelMeasVolume( surf, Bz) );
+    	  streamlog_out(DEBUG4)<<"created DDPixelMeasVolume for TPC"<<std::endl;
+      } else {
+    	  Add( new DDCylinderMeasLayer( surf , Bz ) ) ;
+      }
     }
 
     else if( surf->type().isCone() ) {
