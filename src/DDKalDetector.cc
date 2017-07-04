@@ -43,7 +43,7 @@ DDKalDetector::DDKalDetector( DD4hep::Geometry::DetElement det ){
 
   double Bz = bfield[2] / dd4hep::tesla ;
 
-  streamlog_out( DEBUG4 ) << " - use Bz = " << Bz << " Tesla " << std::endl ;
+  streamlog_out( DEBUG2 ) << " - use Bz = " << Bz << " Tesla " << std::endl ;
   //-------------
 
 
@@ -87,7 +87,7 @@ DDKalDetector::DDKalDetector( DD4hep::Geometry::DetElement det ){
 			   << " ------------------------- "  << std::endl ;
 
     if( surf->type().isCylinder() ) {
-      if(det.type()==std::string("TPC")  &&  isPixelTPC()) {
+      if(det.type()==std::string("TPC") && isPixelTPC()) {
     	  Add( new DDPixelMeasVolume( surf, Bz) );
     	  streamlog_out(DEBUG4)<<"created DDPixelMeasVolume for TPC"<<std::endl;
       } else {

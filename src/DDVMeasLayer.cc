@@ -1,6 +1,7 @@
 
 #include "DDKalTest/DDVMeasLayer.h"
 #include "DDKalTest/MaterialMap.h"
+#include "DDKalTest/DDGetTPCFieldDescription.h"
 
 #include "kaltest/TVMeasLayer.h"  // from KalTrackLib
 #include "kaltest/TKalTrack.h"    // from KalTrackLib
@@ -14,6 +15,7 @@
 #include <DD4hep/DD4hepUnits.h>
 
 #include "streamlog/streamlog.h"
+
 
 Bool_t   DDVMeasLayer::kActive = kTRUE;
 Bool_t   DDVMeasLayer::kDummy = kFALSE;
@@ -46,7 +48,8 @@ DDVMeasLayer::DDVMeasLayer( DDSurfaces::ISurface* surf,
   unsigned cellID = surf->id() ;
   _cellIDs.push_back( cellID );
   
-  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ; 
+//  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
   encoder.setValue(cellID);
   encoder[ UTIL::LCTrackerCellID::module() ] = 0;
   encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
@@ -70,7 +73,8 @@ DDVMeasLayer::DDVMeasLayer( DDSurfaces::ISurface* surf,
 {
   _cellIDs.push_back(cellID);
   
-  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ; 
+//  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
   encoder.setValue(cellID);
   encoder[ UTIL::LCTrackerCellID::module() ] = 0;
   encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
@@ -98,7 +102,8 @@ DDVMeasLayer::DDVMeasLayer(  DDSurfaces::ISurface* surf,
     streamlog_out(ERROR) << __FILE__ << " line " << __LINE__ << " size of cellIDs == 0" << std::endl;
   }
   
-  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
+//  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
   encoder.setValue(cellIDs.at(0));
   encoder[ UTIL::LCTrackerCellID::module() ] = 0;
   encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
@@ -196,7 +201,7 @@ Double_t DDVMeasLayer::GetEnergyLoss( Bool_t    isoutgoing,
 						  ref_point.Z()*dd4hep::mm ) ) ;
     double energy(0), beta(0) ;
     edep = aidaTT::computeEnergyLoss( _surf, trkParam , energy, beta, mass ) ;
-    
+
   }else{
     
     //----- add energy loss from both sides of the surface 
