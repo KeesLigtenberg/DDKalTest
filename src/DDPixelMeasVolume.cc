@@ -2,12 +2,11 @@
 #include <DDKalTest/DDPixelMeasVolume.h>
 #include "TKalTrack.h" 
 
-#include "DDKalTest/DDKalTestConf.h"
-
 #include <lcio.h>
 #include <EVENT/TrackerHit.h>
 #include <EVENT/TrackerHitZCylinder.h>
 #include <UTIL/Operators.h>
+#include <UTIL/LCTrackerConf.h>
 
 #include "DD4hep/DD4hepUnits.h"
 #include "DDSurfaces/Vector3D.h"
@@ -20,6 +19,8 @@
 #include "TCircle.h"
 
 #include <cmath>
+
+#include "DDKalTest/DDGetTPCFieldDescription.h"
 
 namespace{
   /** helper function to restrict the range of the azimuthal angle to ]-pi,pi]*/
@@ -53,10 +54,10 @@ DDPixelMeasVolume::DDPixelMeasVolume(DDSurfaces::ISurface* surf,
   
   static double epsilon=1e-4 ;
 
-  UTIL::BitField64 encoder( DDKalTest::CellIDEncoding::instance().encoding_string() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
   encoder.setValue( surf->id() );
 
-  int side = encoder[ DDKalTest::CellIDEncoding::instance().side() ] ;
+  int side = encoder[ UTIL::LCTrackerCellID::side() ] ;
 
   fSortingPolicy = dynamic_cast<DDSurfaces::ICylinder*>(surf)->radius()/dd4hep::mm + side * epsilon ;
 
@@ -66,17 +67,20 @@ DDPixelMeasVolume::DDPixelMeasVolume(DDSurfaces::ISurface* surf,
 			<< " R = " << this->GetR() 
 			<< " sorting policy : " << GetSortingPolicy()
 			<< " is_active = " << surf->type().isSensitive()  
-			<< " CellID = " << DDKalTest::CellIDEncoding::valueString( surf->id() ) 
+			<< " CellID = " << UTIL::LCTrackerCellID::valueString( surf->id() )
+			<< " layer = " << encoder[ UTIL::LCTrackerCellID::layer() ]
 			<< " name = " << this->DDVMeasLayer::GetName()  
 			<< std::endl ;
 
   // for a cylindrical layer we also set the side to 0 in the layerId 
   // ( in the case the cylinder is split between forward and backward )
-  encoder[ DDKalTest::CellIDEncoding::instance().side() ] = 0;
-  encoder[ DDKalTest::CellIDEncoding::instance().module() ] = 0;
-  encoder[ DDKalTest::CellIDEncoding::instance().sensor() ] = 0;
+  encoder[ UTIL::LCTrackerCellID::side() ] = 0;
+  encoder[ UTIL::LCTrackerCellID::module() ] = 0;
+  encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
   
   _layerID = encoder.lowWord();
+
+  streamlog_out(DEBUG0)<<"DDPixelMeasVolume with layerID="<<_layerID<<std::endl;
 
 }
 
@@ -272,7 +276,8 @@ Int_t DDPixelMeasVolume::calcClosestPointWith(const TVTrack& hel, TVector3& xx,
 
    TVector2 xxp[2];
    Int_t nx = c.CalcXingPointWith(cv, xxp);
-   if(nx) { std::cout<<"DDPixelMeasVolume::calcClosestPointWith terminated nx="<<nx<<" for volume at radius "<<GetR()<<std::endl; return 0;} //there is a crossing point somewhere. Hit is probably not on surface
+   //there is a crossing point somewhere. Hit is probably not on surface, e.g. outside cylinder?
+   if(nx) { streamlog_out(DEBUG2)<<"DDPixelMeasVolume::calcClosestPointWith terminated nx="<<nx<<" for volume at radius "<<GetR()<<std::endl; return 0;}
    //calculate closest point here instead of crossing
    nx=1;  //one closest point
    //circle c lies within cv

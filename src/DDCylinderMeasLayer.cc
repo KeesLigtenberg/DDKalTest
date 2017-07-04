@@ -2,6 +2,7 @@
 
 #include "DDKalTest/DDCylinderMeasLayer.h"
 #include "DDKalTest/DDCylinderHit.h"
+#include "DDKalTest/DDGetTPCFieldDescription.h"
 #include <UTIL/LCTrackerConf.h>
 
 #include <lcio.h>
@@ -47,7 +48,8 @@ DDCylinderMeasLayer::DDCylinderMeasLayer(dd4hep::rec::ISurface* surf,
   
   static double epsilon=1e-4 ;
 
-  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
+//  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
   encoder.setValue( surf->id() );
 
   int side = encoder[ UTIL::LCTrackerCellID::side() ] ;
