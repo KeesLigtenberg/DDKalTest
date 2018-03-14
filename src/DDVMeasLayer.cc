@@ -377,10 +377,13 @@ void DDVMeasLayer::CalcQms( Bool_t        /*isoutgoing*/,
 
 
   streamlog_out( DEBUG1 ) << " ** in  DDVMeasLayer::CalcQms: "
-			  << " inner material: " << mat_i.name()  
-			  << " outer material: " << mat_o.name()  << std::scientific
-			  << " path: " << path
-			  << " x0inv: " << x0inv
+		  	  << " momentum[GeV]: " << mom
+			  << " mass[GeV]: " << mass
+			  << " inner material: " << mat_i.name()  //<< " ("<< l_i << ")"
+			  << " outer material: " << mat_o.name()  //<< " ("<< l_o << ")"
+			  << std::scientific
+			  << " path[cm]: " << path
+			  << " x0inv[cm-1]: " << x0inv
 			  << " sgms2: " << sgms2
 			  << " cosTrk: " << cosTrk
 			  << std::endl ;
