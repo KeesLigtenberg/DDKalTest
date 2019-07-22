@@ -30,6 +30,7 @@ public:
   }
 
   EVENT::TrackerHit* getLCIOTrackerHit() { return _trkhit; }
+  const EVENT::TrackerHit* getLCIOTrackerHit() const { return _trkhit; }
 
  private:
   

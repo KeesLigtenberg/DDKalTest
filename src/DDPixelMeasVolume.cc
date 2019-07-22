@@ -37,16 +37,16 @@ namespace{
 
 using namespace UTIL ;
 
-DDPixelMeasVolume::DDPixelMeasVolume(DDSurfaces::ISurface* surf,
+DDPixelMeasVolume::DDPixelMeasVolume(dd4hep::rec::ISurface* surf,
 					 Double_t   Bz,
 					 const Char_t  *name ) :
   DDVMeasLayer(  surf, Bz, name ) ,
   
-  TCylinder(  dynamic_cast<DDSurfaces::ICylinder*>(surf)->radius()/dd4hep::mm ,
+  TCylinder(  dynamic_cast<dd4hep::rec::ICylinder*>(surf)->radius()/dd4hep::mm ,
 	      surf->length_along_v()/dd4hep::mm / 2. ,
-	      dynamic_cast<DDSurfaces::ICylinder*>(surf)->center().x()/dd4hep::mm,
-	      dynamic_cast<DDSurfaces::ICylinder*>(surf)->center().y()/dd4hep::mm ,
-	      dynamic_cast<DDSurfaces::ICylinder*>(surf)->center().z()/dd4hep::mm ),
+	      dynamic_cast<dd4hep::rec::ICylinder*>(surf)->center().x()/dd4hep::mm,
+	      dynamic_cast<dd4hep::rec::ICylinder*>(surf)->center().y()/dd4hep::mm ,
+	      dynamic_cast<dd4hep::rec::ICylinder*>(surf)->center().z()/dd4hep::mm ),
   
   fSortingPolicy(0.),
   
@@ -59,7 +59,7 @@ DDPixelMeasVolume::DDPixelMeasVolume(DDSurfaces::ISurface* surf,
 
   int side = encoder[ UTIL::LCTrackerCellID::side() ] ;
 
-  fSortingPolicy = dynamic_cast<DDSurfaces::ICylinder*>(surf)->radius()/dd4hep::mm + side * epsilon ;
+  fSortingPolicy = dynamic_cast<dd4hep::rec::ICylinder*>(surf)->radius()/dd4hep::mm + side * epsilon ;
 
   // assumptions made here: the cylinder runs parallel to z and v ...
   

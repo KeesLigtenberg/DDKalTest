@@ -20,7 +20,7 @@ class DDPixelMeasVolume : public DDVMeasLayer, public TCylinder {
 public:
   
   /// Constructor: initialize with Surface and B-field
-  DDPixelMeasVolume(DDSurfaces::ISurface* surf,
+  DDPixelMeasVolume(dd4hep::rec::ISurface* surf,
 		      Double_t   Bz,
 		      const Char_t    *name = "DDPixelMeasVolume") ;
 

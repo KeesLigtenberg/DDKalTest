@@ -20,7 +20,7 @@
 #include "streamlog/streamlog.h"
 
 inline bool isPixelTPC() {
-  DD4hep::Geometry::LCDD& lcdd = DD4hep::Geometry::LCDD::getInstance();
+  auto& lcdd = dd4hep::Detector::getInstance();
   const std::string TPCReadoutType= lcdd.constantAsString("TPC_readoutType");
   return (TPCReadoutType=="pixel");
 }
