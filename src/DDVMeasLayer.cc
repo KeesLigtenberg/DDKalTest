@@ -48,7 +48,7 @@ DDVMeasLayer::DDVMeasLayer( dd4hep::rec::ISurface* surf,
   _cellIDs.push_back( cellID );
   
 //  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
-  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription(cellID) ) ;
   encoder.setValue(cellID);
   encoder[ UTIL::LCTrackerCellID::module() ] = 0;
   encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
@@ -72,7 +72,7 @@ DDVMeasLayer::DDVMeasLayer( dd4hep::rec::ISurface* surf,
   _cellIDs.push_back(cellID);
   
 //  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
-  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription(cellID) ) ;
   encoder.setValue(cellID);
   encoder[ UTIL::LCTrackerCellID::module() ] = 0;
   encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
@@ -100,7 +100,7 @@ DDVMeasLayer::DDVMeasLayer(  dd4hep::rec::ISurface* surf,
   }
   
 //  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
-  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription(cellIDs.at(0)) ) ;
   encoder.setValue(cellIDs.at(0));
   encoder[ UTIL::LCTrackerCellID::module() ] = 0;
   encoder[ UTIL::LCTrackerCellID::sensor() ] = 0;
@@ -389,9 +389,18 @@ void DDVMeasLayer::CalcQms( Bool_t        /*isoutgoing*/,
 			  << std::endl ;
 
 
+  constexpr bool enableMSOffsetError=false;
+  if(enableMSOffsetError) {
+    streamlog_out( DEBUG1 ) << "using Qms with displacement error\n";
+  	path*=10; //to mm
+    Qms(0,0) = sgms2 * tnl21 * path * path / 3;
+    Qms(1,0) = Qms(0,1) = sgms2 * tnl21 * path / 2;
+    Qms(3,3) = sgms2 * tnl21 * tnl21 * path * path /3;
+    Qms(3,4) = Qms(4,3) = sgms2 * tnl21 * path / 2;
+    //what is the correlation between 2,3?
+  }
   Qms(1,1) = sgms2 * tnl21;
   Qms(2,2) = sgms2 * cpatnl * cpatnl;
-  Qms(2,4) = sgms2 * cpatnl * tnl21;
-  Qms(4,2) = sgms2 * cpatnl * tnl21;
-  Qms(4,4) = sgms2 * tnl21  * tnl21;
+  Qms(2,4) = Qms(4,2) = sgms2 * cpatnl * tnl21;
+  Qms(4,4) = sgms2 * tnl21 * tnl21;
 }

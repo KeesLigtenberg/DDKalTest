@@ -89,6 +89,14 @@ public:
   }
 
   Double_t GetSortingPolicy() const { return fSortingPolicy; }
+
+  /** Overwrite of multiple scattering method using the total path length
+   *  for the gaussian fit
+   */
+  virtual void CalcQms( Bool_t isoutgoing,
+			const TVTrack &hel,
+			Double_t  df,
+			TKalMatrix  &Qms) const ;
  
 protected:
   Double_t fSortingPolicy;

@@ -9,8 +9,15 @@
 #define INCLUDE_DDKALTEST_DDGETTPCFIELDDESCRIPTION_H_
 
 #include "DD4hep/Detector.h"
+#include <UTIL/LCTrackerConf.h>
 
-inline std::string getDDFieldDescription() { return dd4hep::Detector::getInstance().idSpecification("TPCCollection").fieldDescription(); }
-
+//inline std::string getDDFieldDescription() { return dd4hep::Detector::getInstance().idSpecification("TPCCollection").fieldDescription(); }
+inline std::string getDDFieldDescription(int id) {
+	id&=0x7f; //select first seven bits
+	if( id==100 || id==36 || id==4 ) //is TPC? (4=no side encoding?)
+		return dd4hep::Detector::getInstance().idSpecification("TPCCollection").fieldDescription();
+	else
+		return UTIL::LCTrackerCellID::encoding_string();
+}
 
 #endif /* INCLUDE_DDKALTEST_DDGETTPCFIELDDESCRIPTION_H_ */

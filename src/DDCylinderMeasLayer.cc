@@ -49,7 +49,7 @@ DDCylinderMeasLayer::DDCylinderMeasLayer(dd4hep::rec::ISurface* surf,
   static double epsilon=1e-4 ;
 
 //  UTIL::BitField64 encoder( UTIL::LCTrackerCellID::encoding_string() ) ;
-  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription(surf->id()) ) ;
   encoder.setValue( surf->id() );
 
   int side = encoder[ UTIL::LCTrackerCellID::side() ] ;

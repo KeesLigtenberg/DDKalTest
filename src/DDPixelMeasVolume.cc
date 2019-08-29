@@ -10,6 +10,7 @@
 
 #include "DD4hep/DD4hepUnits.h"
 #include "DDSurfaces/Vector3D.h"
+#include "DDRec/DetectorData.h"
 
 #include "aidaTT/trajectory.hh"
 
@@ -54,7 +55,7 @@ DDPixelMeasVolume::DDPixelMeasVolume(dd4hep::rec::ISurface* surf,
   
   static double epsilon=1e-4 ;
 
-  UTIL::BitField64 encoder( getDDFieldDescription() ) ;
+  UTIL::BitField64 encoder( getDDFieldDescription(surf->id()) ) ;
   encoder.setValue( surf->id() );
 
   int side = encoder[ UTIL::LCTrackerCellID::side() ] ;
@@ -87,7 +88,7 @@ DDPixelMeasVolume::DDPixelMeasVolume(dd4hep::rec::ISurface* surf,
 
 /** Global to Local coordinates */
 
-TKalMatrix DDPixelMeasVolume::XvToMv(const TVector3 &xv, const TKalTrackState&) const
+TKalMatrix DDPixelMeasVolume::XvToMv(const TVector3 & /*xv*/, const TKalTrackState&) const
 {
   
   if(fMDim!=2) {
@@ -145,7 +146,7 @@ TMatrixD DDPixelMeasVolume::CalcDSDx(const TVector3 &xx) const
 
 
 
-void DDPixelMeasVolume::CalcDhDa(const TVTrackHit& ht, const TKalTrackState& a,
+void DDPixelMeasVolume::CalcDhDa(const TVTrackHit& /*ht*/, const TKalTrackState& a,
 		const TVector3& xxv, const TKalMatrix& dxphiada, TKalMatrix& H) const {
 
 //	  // Calculate
@@ -165,7 +166,7 @@ void DDPixelMeasVolume::CalcDhDa(const TVTrackHit& ht, const TKalTrackState& a,
 	  TVector3 xxvc = xxv - GetXc();
 
 	  double trackPhi0=a(1,0)+M_PI/2.;
-	  double cylinderPhi0=atan2(xxv.Y(), xxv.X());
+//	  double cylinderPhi0=atan2(xxv.Y(), xxv.X());
 //	  std::cout<<"Phi track= "<<trackPhi0<<" cylinder= "<<cylinderPhi0<<std::endl;
 //	  std::cout<<"dxphiada=\n"<<dxphiada;
 
@@ -209,10 +210,10 @@ void DDPixelMeasVolume::CalcDhDa(const TVTrackHit& ht, const TKalTrackState& a,
 }
 
 /** Calculate Projector Matrix */
-void DDPixelMeasVolume::CalcDhDa(const TVTrackHit &vht, // tracker hit not used here
-                                    const TVector3   &xxv,
-                                    const TKalMatrix &dxphiada,
-                                    TKalMatrix &H) const
+void DDPixelMeasVolume::CalcDhDa(const TVTrackHit & /*vht*/, // tracker hit not used here
+                                    const TVector3   & /*xxv*/,
+                                    const TKalMatrix & /*dxphiada*/,
+                                    TKalMatrix &/*H*/) const
 {
 	streamlog_out(ERROR)<<"DDPixelMeasVolume::CalcDhDa called without TKalTrackState"<<std::endl;
 	throw "unexpected call";
@@ -498,9 +499,115 @@ Int_t DDPixelMeasVolume::CalcXingPointWith(const TVTrack  &hel,
 //*/
 
 
-TKalMatrix DDPixelMeasVolume::XvToMv(const TVTrackHit& ht,
-		const TVector3& xv) const {
+TKalMatrix DDPixelMeasVolume::XvToMv(const TVTrackHit& /*ht*/,
+		const TVector3& /*xv*/) const {
 	streamlog_out(ERROR)<<"DDPixelMeasVolume::XvToMv called without TKalTrackState"<<std::endl;
 	throw "unexpected call";
+}
+
+void DDPixelMeasVolume::CalcQms( Bool_t        /*isoutgoing*/,
+			    const TVTrack &hel,
+			    Double_t      /*df*/,
+			    TKalMatrix    &Qms) const
+{
+  Double_t cpa    = hel.GetKappa();
+  Double_t tnl    = hel.GetTanLambda();
+  Double_t tnl2   = tnl * tnl;
+  Double_t tnl21  = 1. + tnl2;
+  Double_t cpatnl = cpa * tnl;
+  Double_t cslinv = TMath::Sqrt(tnl21);
+  Double_t mom    = TMath::Abs(1. / cpa) * cslinv;
+  if(!hel.IsInB()) mom = hel.GetMomentum();
+
+  static const Double_t kMpi = 0.13957018; // pion mass [GeV]
+  TKalTrack *ktp  = static_cast<TKalTrack *>(TVKalSystem::GetCurInstancePtr());
+  Double_t   mass = ktp ? ktp->GetMass() : kMpi;
+  Double_t   beta = mom / TMath::Sqrt(mom * mom + mass * mass);
+
+  // *Calculate sigma_ms0 =============================================
+  static const Double_t kMS1  = 0.0136;
+  static const Double_t kMS12 = kMS1 * kMS1;
+  static const Double_t kMS2  = 0.038;
+
+
+  // average the X0 of the inner and outer materials:
+  // could also move to c'tor and cache value ...
+  const dd4hep::rec::IMaterial& mat_i = _surf->innerMaterial() ;
+  const dd4hep::rec::IMaterial& mat_o = _surf->outerMaterial() ;
+  double x_i = mat_i.radiationLength() ;
+  double x_o = mat_o.radiationLength() ;
+  double l_i = _surf->innerThickness() ;
+  double l_o = _surf->outerThickness() ;
+
+  Double_t x0inv = ( l_i/x_i + l_o/x_o ) / ( l_i + l_o ) ;
+
+  //compute path as projection of (straight) track to surface normal:
+  Double_t phi0   = hel.GetPhi0();
+  dd4hep::rec::Vector3D p( - std::sin( phi0 ), std::cos( phi0 ) , tnl ) ;
+  dd4hep::rec::Vector3D up = p.unit() ;
+
+  // need to get the normal at crossing point ( should be the current helix' reference point)
+  const TVector3& piv = hel.GetPivot() ;
+  dd4hep::rec::Vector3D xx( piv.X()*dd4hep::mm,piv.Y()*dd4hep::mm,piv.Z()*dd4hep::mm) ;
+  const dd4hep::rec::Vector3D& n = _surf->normal( xx ) ;
+
+  Double_t cosTrk = std::fabs( up * n )  ;
+
+  double path = l_i + l_o ;
+
+  //note: projectedPath is already in dd4hep(TGeo) units, i.e. cm !
+  path /= cosTrk ;
+
+  Double_t xl   = path * x0inv;
+  static const double totalR = 0.6; //simulation step size = 990 um, pad size = 6 mm
+//  [] {
+//  		dd4hep::Detector& lcdd = dd4hep::Detector::getInstance();
+//  		dd4hep::DetElement tpcDE = lcdd.detector("TPC") ;
+//  		auto tpc = tpcDE.extension<dd4hep::rec::FixedPadSizeTPCData>() ;
+//  		return tpc->rMaxReadout-tpc->rMinReadout; //rMin and rMax are also already in cm
+//  }();
+  Double_t xlTotal = totalR/cosTrk * x0inv;
+
+
+
+  // ------------------------------------------------------------------
+  // Changed here : xl -> xlTotal,
+  // which is the same as calculating total scattering and than distributing
+  // over all volumes
+  Double_t tmp = 1. + kMS2 * TMath::Log( xlTotal );
+  tmp /= (mom * beta);
+  Double_t sgms2 = kMS12 * xl * tmp * tmp;
+  // ------------------------------------------------------------------
+
+
+  streamlog_out( DEBUG1 ) << " ** in  DDPixelMeasVolume::CalcQms: "
+		  	  << " momentum[GeV]: " << mom
+			  << " mass[GeV]: " << mass
+			  << " inner material: " << mat_i.name()  //<< " ("<< l_i << ")"
+			  << " outer material: " << mat_o.name()  //<< " ("<< l_o << ")"
+			  << std::scientific
+			  << " path[cm]: " << path
+			  << " x0inv[cm-1]: " << x0inv
+			  << " sgms2: " << sgms2
+			  << " cosTrk: " << cosTrk
+				<< " totalR: " << totalR
+				<< " xlTotal: " << xlTotal
+			  << std::endl ;
+
+
+  constexpr bool enableMSOffsetError=false;
+  if(enableMSOffsetError) {
+    streamlog_out( DEBUG1 ) << "using Qms with displacement error\n";
+  	path*=10; //to mm
+    Qms(0,0) = sgms2 * tnl21 * path * path / 3;
+    Qms(1,0) = Qms(0,1) = sgms2 * tnl21 * path / 2;
+    Qms(3,3) = sgms2 * tnl21 * tnl21 * path * path /3;
+    Qms(3,4) = Qms(4,3) = sgms2 * tnl21 * path / 2;
+    //what is the correlation between 2,3?
+  }
+  Qms(1,1) = sgms2 * tnl21;
+  Qms(2,2) = sgms2 * cpatnl * cpatnl;
+  Qms(2,4) = Qms(4,2) = sgms2 * cpatnl * tnl21;
+  Qms(4,4) = sgms2 * tnl21 * tnl21;
 }
 

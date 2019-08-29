@@ -121,6 +121,9 @@ Int_t DDParallelPlanarMeasLayer::CalcXingPointWith(const TVTrack  &hel,
 			    << " mode : " << mode
 			    << std::endl ;
 
+    streamlog_out( DEBUG0 ) << "++++ surface info : " << _surf->id() << "\n"
+    		<< _surf <<"\n";
+
     return 0 ;
   }
  
