@@ -11,6 +11,8 @@
 #include "DD4hep/Detector.h"
 #include <UTIL/LCTrackerConf.h>
 
+//canoncial is "subdet:5,side:-2,layer:9,module:8,sensor:8" but might be changed!
+
 //inline std::string getDDFieldDescription() { return dd4hep::Detector::getInstance().idSpecification("TPCCollection").fieldDescription(); }
 inline std::string getDDFieldDescription(int id) {
 	id&=0x7f; //select first seven bits
